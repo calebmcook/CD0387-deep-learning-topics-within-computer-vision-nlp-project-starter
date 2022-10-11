@@ -29,12 +29,26 @@ def train(model, train_loader, criterion, optimizer):
     '''
     pass
     
+    
 def net():
     '''
     TODO: Complete this function that initializes your model
           Remember to use a pretrained model
+    Student's note: Code adapted from exercise: "Common Model Architecture Types and Fine-Tuning", finetune_a_cnn_solution.py
     '''
-    pass
+    model = models.resnet18(pretrained=True)
+
+    for param in model.parameters():
+        #requires_grad = False in order to allow fine-tuning
+        param.requires_grad = False   
+
+    num_features=model.fc.in_features
+    
+    #sequential layer will have 133 outputs, the number of possible dog classifications
+    model.fc = nn.Sequential(
+                   nn.Linear(num_features, 133))
+    return model
+
 
 def create_data_loaders(data, batch_size):
     '''
