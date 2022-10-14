@@ -7,8 +7,16 @@ import torch.optim as optim
 import torchvision
 import torchvision.models as models
 import torchvision.transforms as transforms
-
+import json
+import os
 import argparse
+import logging
+import sys
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+logger.addHandler(logging.StreamHandler(sys.stdout))
+
 
 def test(model, test_loader):
     '''
@@ -42,7 +50,7 @@ def train(model, train_loader, criterion, optimizer):
           data loaders for training and will get train the model
           Remember to include any debugging/profiling hooks that you might need
     '''
-        epochs=1
+    epochs=1
     best_loss=1e6
     image_dataset={'train':train_loader, 'valid':validation_loader}
     loss_counter=0
@@ -125,12 +133,8 @@ def net():
 
 
 
-def create_data_loaders(data, batch_size):
+def create_data_loaders(data):
     '''
-    This is an optional function that you may or may not need to implement
-    depending on whether you need to use data loaders or not
-    '''
-     '''
     This is an optional function that you may or may not need to implement
     depending on whether you need to use data loaders or not
     '''
@@ -156,20 +160,35 @@ def create_data_loaders(data, batch_size):
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
     
     trainset = torchvision.datasets.ImageFolder(root=TRAIN_DATASET_PATH, transform=training_transform)
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size,
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size,
             shuffle=True)
     
     validationset = torchvision.datasets.ImageFolder(root=VALID_DATASET_PATH, transform=validation_transform)
-    validationloader = torch.utils.data.DataLoader(validationset, batch_size=batch_size,
+    validationloader = torch.utils.data.DataLoader(validationset, batch_size=args.batch_size,
             shuffle=True)
 
     testset = torchvision.datasets.ImageFolder(root=TEST_DATASET_PATH, transform=testing_transform)
-    testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size,
+    testloader = torch.utils.data.DataLoader(testset, batch_size=args.test_batch_size,
             shuffle=False)
     
     return trainloader, validationloader, testloader
 
 
+
+def model_fn(model_dir):
+    model = Net()
+    with open(os.path.join(model_dir, "model.pth"), "rb") as f:
+        model.load_state_dict(torch.load(f))
+    return model
+
+
+
+def save_model(model, model_dir):
+    logger.info("Saving the model.")
+    path = os.path.join(model_dir, "model.pth")
+    torch.save(model.cpu().state_dict(), path)
+
+    
 
 def main(args):
     '''
@@ -185,7 +204,7 @@ def main(args):
     TODO: Create your loss and optimizer
     '''
     loss_criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.fc.parameters(), lr=0.0001)
+    optimizer = optim.Adam(model.fc.parameters(), lr=args.lr)
     #hook = smd.Hook.create_from_json_file()
     #hook.register_hook(model)
     
@@ -211,9 +230,43 @@ def main(args):
     
 if __name__=='__main__':
     parser=argparse.ArgumentParser()
+    
     '''
     TODO: Specify all the hyperparameters you need to use to train your model.
     '''
+    
+    # Data and model checkpoints directories
+    parser.add_argument(
+        "--batch-size",
+        type=int,
+        default=64,
+        metavar="N",
+        help="input batch size for training (default: 64)",
+    )
+    parser.add_argument(
+        "--test-batch-size",
+        type=int,
+        default=1000,
+        metavar="N",
+        help="input batch size for testing (default: 1000)",
+    )
+    parser.add_argument(
+        "--epochs",
+        type=int,
+        default=1,
+        metavar="N",
+        help="number of epochs to train (default: 1)",
+    )
+    parser.add_argument(
+        "--lr", type=float, default=0.01, metavar="LR", help="learning rate (default: 0.01)"
+    )
+
+    # Container environment
+    parser.add_argument("--hosts", type=list, default=json.loads(os.environ["SM_HOSTS"]))
+    parser.add_argument("--current-host", type=str, default=os.environ["SM_CURRENT_HOST"])
+    parser.add_argument("--model-dir", type=str, default=os.environ["SM_MODEL_DIR"])
+    parser.add_argument("--data-dir", type=str, default=os.environ["SM_CHANNEL_TRAINING"])
+    parser.add_argument("--num-gpus", type=int, default=os.environ["SM_NUM_GPUS"])
     
     args=parser.parse_args()
     
