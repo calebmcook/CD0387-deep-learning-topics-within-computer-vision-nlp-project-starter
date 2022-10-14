@@ -10,8 +10,7 @@ import torchvision.transforms as transforms
 
 import argparse
 
-#Reference: Common Model Architecture Types and Fine-Tuning lesson, finetune_a_cnn_solution.py
-
+#References: See train_and_deploy.ipynb for full list, including from Common Model Architecture Types and Fine-Tuning lesson, finetune_a_cnn_solution.py
 
 #TODO: Import dependencies for Debugging andd Profiling
 
@@ -47,8 +46,7 @@ def train(model, train_loader, validation_loader, criterion, optimizer, device):
           data loaders for training and will get train the model
           Remember to include any debugging/profiling hooks that you might need
     '''
-    def train(model, train_loader, validation_loader, criterion, optimizer, device):
-    epochs=2
+    epochs=1
     best_loss=1e6
     image_dataset={'train':train_loader, 'valid':validation_loader}
     loss_counter=0
@@ -135,7 +133,17 @@ def create_data_loaders(data, batch_size):
     This is an optional function that you may or may not need to implement
     depending on whether you need to use data loaders or not
     '''
+    TRAIN_DATASET_PATH="s3://sagemaker-us-east-1-260552509205/data/train/"
+    TEST_DATASET_PATH="s3://sagemaker-us-east-1-260552509205/data/test/"
+    VALID_DATASET_PATH="s3://sagemaker-us-east-1-260552509205/data/valid/"
+    
     training_transform = transforms.Compose([
+    transforms.RandomHorizontalFlip(p=0.5),
+    transforms.Resize(224),
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
+    
+    validation_transform = transforms.Compose([
     transforms.RandomHorizontalFlip(p=0.5),
     transforms.Resize(224),
     transforms.ToTensor(),
@@ -146,18 +154,19 @@ def create_data_loaders(data, batch_size):
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
     
-    trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
-        download=True, transform=training_transform)
-
+    trainset = torchvision.datasets.ImageFolder(root=TRAIN_DATASET_PATH, transform=training_transform)
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size,
             shuffle=True)
+    
+    validationset = torchvision.datasets.ImageFolder(root=VALID_DATASET_PATH, transform=validation_transform)
+    validationloader = torch.utils.data.DataLoader(validationset, batch_size=batch_size,
+            shuffle=True)
 
-    testset = torchvision.datasets.CIFAR10(root='./data', train=False,
-            download=True, transform=testing_transform)
-
+    testset = torchvision.datasets.ImageFolder(root=TEST_DATASET_PATH, transform=testing_transform)
     testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size,
             shuffle=False)
-
+    
+    return trainloader, validationloader, testloader
 
 
 def main(args):
@@ -165,7 +174,7 @@ def main(args):
     TODO: Initialize a model by calling the net function
     Reference: https://knowledge.udacity.com/questions/896915
     '''
-    batch_size=10
+    #batch_size=10
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print(f"Running on Device {device}")
     
@@ -177,19 +186,22 @@ def main(args):
     '''
     loss_criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.fc.parameters(), lr=0.0001)
-    hook = smd.Hook.create_from_json_file()
-    hook.register_hook(model)
+    #hook = smd.Hook.create_from_json_file()
+    #hook.register_hook(model)
+    
+    #create loaders
+    trainloader, validationloader, testloader = create_data_loaders(batch_size=10)
     
     '''
     TODO: Call the train function to start training your model
     Remember that you will need to set up a way to get training data from S3
     '''
-    train(model, trainloader, testloader, criterion, optimizer, device)
+    train(model, trainloader, validationloader, loss_criterion, optimizer, device)
     
     '''
     TODO: Test the model to see its accuracy
     '''
-    test(model, testloader, criterion, device)
+    test(model, testloader, loss_criterion, device)
     
     '''
     TODO: Save the trained model
