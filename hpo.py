@@ -133,41 +133,41 @@ def net():
 
 
 
-def create_data_loaders(data):
+def create_data_loaders(args):
     '''
     This is an optional function that you may or may not need to implement
     depending on whether you need to use data loaders or not
     '''
-    TRAIN_DATASET_PATH="s3://sagemaker-us-east-1-260552509205/data/train/"
-    TEST_DATASET_PATH="s3://sagemaker-us-east-1-260552509205/data/test/"
-    VALID_DATASET_PATH="s3://sagemaker-us-east-1-260552509205/data/valid/"
+    #TRAIN_DATASET_PATH="s3://sagemaker-us-east-1-260552509205/data/train/"
+    #TEST_DATASET_PATH="s3://sagemaker-us-east-1-260552509205/data/test/"
+    #VALID_DATASET_PATH="s3://sagemaker-us-east-1-260552509205/data/valid/"
     
     training_transform = transforms.Compose([
     transforms.RandomHorizontalFlip(p=0.5),
-    transforms.Resize(224),
+    transforms.Resize((224,224)),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
     
     validation_transform = transforms.Compose([
     transforms.RandomHorizontalFlip(p=0.5),
-    transforms.Resize(224),
+    transforms.Resize((224,224)),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
     
     testing_transform = transforms.Compose([
-    transforms.Resize(224),
+    transforms.Resize((224,224)),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
     
-    trainset = torchvision.datasets.ImageFolder(root=TRAIN_DATASET_PATH, transform=training_transform)
+    trainset = torchvision.datasets.ImageFolder(root=args.training_dir, transform=training_transform)
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size,
             shuffle=True)
     
-    validationset = torchvision.datasets.ImageFolder(root=VALID_DATASET_PATH, transform=validation_transform)
+    validationset = torchvision.datasets.ImageFolder(root=args.validation_dir, transform=validation_transform)
     validationloader = torch.utils.data.DataLoader(validationset, batch_size=args.batch_size,
             shuffle=True)
 
-    testset = torchvision.datasets.ImageFolder(root=TEST_DATASET_PATH, transform=testing_transform)
+    testset = torchvision.datasets.ImageFolder(root=args.testing_dir, transform=testing_transform)
     testloader = torch.utils.data.DataLoader(testset, batch_size=args.test_batch_size,
             shuffle=False)
     
@@ -209,7 +209,7 @@ def main(args):
     #hook.register_hook(model)
     
     #create loaders
-    trainloader, validationloader, testloader = create_data_loaders(batch_size=10)
+    trainloader, validationloader, testloader = create_data_loaders(args)
     
     '''
     TODO: Call the train function to start training your model
@@ -224,7 +224,7 @@ def main(args):
     '''
     TODO: Save the trained model
     '''
-    torch.save(model, path)
+    torch.save(model, args.model_dir)
 
     
     
@@ -265,9 +265,10 @@ if __name__=='__main__':
     parser.add_argument("--hosts", type=list, default=json.loads(os.environ["SM_HOSTS"]))
     parser.add_argument("--current-host", type=str, default=os.environ["SM_CURRENT_HOST"])
     parser.add_argument("--model-dir", type=str, default=os.environ["SM_MODEL_DIR"])
-    parser.add_argument("--data-dir", type=str, default=os.environ["SM_CHANNEL_TRAINING"])
+    parser.add_argument("--training-dir", type=str, default=os.environ["SM_CHANNEL_TRAINING"])
+    parser.add_argument("--validation-dir", type=str, default=os.environ["SM_CHANNEL_VALIDATION"])
+    #parser.add_argument("--testing-dir", type=str, default=os.environ["SM_CHANNEL_TESTING"])
     parser.add_argument("--num-gpus", type=int, default=os.environ["SM_NUM_GPUS"])
-    
     args=parser.parse_args()
     
     main(args)
