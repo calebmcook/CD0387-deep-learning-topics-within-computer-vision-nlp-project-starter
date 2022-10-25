@@ -12,6 +12,7 @@ import os
 import argparse
 import logging
 import sys
+import smdebug.pytorch as smd
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -24,6 +25,9 @@ def test(model, test_loader):
           testing data loader and will get the test accuray/loss of the model
           Remember to include any debugging/profiling hooks that you might need
     '''
+    #debugger hook
+    hook.set_mode(smd.modes.EVAL)
+    
     print("Testing Model on Whole Testing Dataset")
     model.eval()
     running_loss=0
@@ -50,6 +54,9 @@ def train(model, train_loader, criterion, optimizer):
           data loaders for training and will get train the model
           Remember to include any debugging/profiling hooks that you might need
     '''
+    #debugger hook
+    hook.set_mode(smd.modes.TRAIN)
+    
     epochs=1
     best_loss=1e6
     image_dataset={'train':train_loader, 'valid':validation_loader}
@@ -160,18 +167,15 @@ def create_data_loaders(args):
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
     
     trainset = torchvision.datasets.ImageFolder(root=args.training_dir, transform=training_transform)
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size,
-            shuffle=True)
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size, shuffle=True)
     
     validationset = torchvision.datasets.ImageFolder(root=args.validation_dir, transform=validation_transform)
-    validationloader = torch.utils.data.DataLoader(validationset, batch_size=args.batch_size,
-            shuffle=True)
+    validationloader = torch.utils.data.DataLoader(validationset, batch_size=args.batch_size, shuffle=True)
 
-    testset = torchvision.datasets.ImageFolder(root=args.testing_dir, transform=testing_transform)
-    testloader = torch.utils.data.DataLoader(testset, batch_size=args.test_batch_size,
-            shuffle=False)
+    #testset = torchvision.datasets.ImageFolder(root=args.testing_dir, transform=testing_transform)
+    #testloader = torch.utils.data.DataLoader(testset, batch_size=args.test_batch_size, shuffle=False)
     
-    return trainloader, validationloader, testloader
+    return trainloader, validationloader #, testloader
 
 
 
@@ -200,6 +204,10 @@ def main(args):
     model=net()
     model.to(device)
     
+    #register hook to model
+    hook = smd.Hook.create_from_json_file()
+    hook.register_hook(model)
+    
     '''
     TODO: Create your loss and optimizer
     '''
@@ -211,15 +219,16 @@ def main(args):
     #create loaders
     trainloader, validationloader, testloader = create_data_loaders(args)
     
+    
     '''
     TODO: Call the train function to start training your model
     Remember that you will need to set up a way to get training data from S3
     '''
-    model=train(model, trainloader, validationloader, loss_criterion, optimizer, device)
+    model=train(model, trainloader, validationloader, loss_criterion, optimizer, device, hook)
     '''
     TODO: Test the model to see its accuracy
     '''
-    test(model, testloader, loss_criterion, device)
+    test(model, testloader, loss_criterion, device, hook)
     
     '''
     TODO: Save the trained model
