@@ -243,7 +243,7 @@ def main(args):
     '''
     TODO: Save the trained model
     '''
-    torch.save(model, args.model_dir)
+    save_model(model, args.model_dir)
 
     
     
