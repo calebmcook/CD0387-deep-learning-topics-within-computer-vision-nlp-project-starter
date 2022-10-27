@@ -26,7 +26,8 @@ def test(model, test_loader):
           Remember to include any debugging/profiling hooks that you might need
     '''
     #debugger hook
-    hook.set_mode(smd.modes.EVAL)
+    #register hook to model -> Use in train_model.py for deploying best-hp model
+    #hook.set_mode(smd.modes.EVAL)
     
     print("Testing Model on Whole Testing Dataset")
     model.eval()
@@ -48,14 +49,16 @@ def test(model, test_loader):
 
 
 
-def train(model, train_loader, criterion, optimizer):
+def train(model, train_loader, validation_loader, criterion, optimizer, device):
+    #train(model, trainloader, validationloader, loss_criterion, optimizer, device)
     '''
     TODO: Complete this function that can take a model and
           data loaders for training and will get train the model
           Remember to include any debugging/profiling hooks that you might need
     '''
     #debugger hook
-    hook.set_mode(smd.modes.TRAIN)
+    #register hook to model -> Use in train_model.py for deploying best-hp model
+    #hook.set_mode(smd.modes.TRAIN)
     
     epochs=1
     best_loss=1e6
@@ -204,31 +207,38 @@ def main(args):
     model=net()
     model.to(device)
     
-    #register hook to model
-    hook = smd.Hook.create_from_json_file()
-    hook.register_hook(model)
+    #register hook to model -> Use in train_model.py for deploying best-hp model
+    ##hook = smd.Hook.create_from_json_file()
+    ##hook.register_hook(model)
     
     '''
     TODO: Create your loss and optimizer
     '''
     loss_criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.fc.parameters(), lr=args.lr)
+    
+    #register hook to model -> Use in train_model.py for deploying best-hp model
     #hook = smd.Hook.create_from_json_file()
     #hook.register_hook(model)
     
     #create loaders
-    trainloader, validationloader, testloader = create_data_loaders(args)
-    
+    #trainloader, validationloader, testloader = create_data_loaders(args)
+    trainloader, validationloader = create_data_loaders(args)
     
     '''
     TODO: Call the train function to start training your model
     Remember that you will need to set up a way to get training data from S3
     '''
-    model=train(model, trainloader, validationloader, loss_criterion, optimizer, device, hook)
+    #Use in train_model.py for deploying best-hp model
+    #model=train(model, trainloader, validationloader, loss_criterion, optimizer, device, hook)
+    model=train(model, trainloader, validationloader, loss_criterion, optimizer, device)
     '''
     TODO: Test the model to see its accuracy
     '''
-    test(model, testloader, loss_criterion, device, hook)
+    
+    #Use in train_model.py for deploying best-hp model
+    #test(model, testloader, loss_criterion, device, hook)
+    #test(model, testloader, loss_criterion, device)
     
     '''
     TODO: Save the trained model
