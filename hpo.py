@@ -49,7 +49,8 @@ def test(model, test_loader):
 
 
 
-def train(model, train_loader, validation_loader, criterion, optimizer, device):
+def train(model, train_loader, criterion, optimizer, device):
+    #train(model, train_loader, validation_loader, criterion, optimizer, device):
     #train(model, trainloader, validationloader, loss_criterion, optimizer, device)
     '''
     TODO: Complete this function that can take a model and
@@ -60,13 +61,13 @@ def train(model, train_loader, validation_loader, criterion, optimizer, device):
     #register hook to model -> Use in train_model.py for deploying best-hp model
     #hook.set_mode(smd.modes.TRAIN)
     
-    epochs=1
+    epochs=2
     best_loss=1e6
-    image_dataset={'train':train_loader, 'valid':validation_loader}
+    image_dataset={'train':train_loader} #, 'valid':validation_loader}
     loss_counter=0
     
     for epoch in range(epochs):
-        for phase in ['train', 'valid']:
+        for phase in ['train'] #['train', 'valid']:
             print(f"Epoch {epoch}, Phase {phase}")
             if phase=='train':
                 model.train()
@@ -158,27 +159,27 @@ def create_data_loaders(args):
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
     
-    validation_transform = transforms.Compose([
-    transforms.RandomHorizontalFlip(p=0.5),
-    transforms.Resize((224,224)),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
+    #validation_transform = transforms.Compose([
+    #transforms.RandomHorizontalFlip(p=0.5),
+    #transforms.Resize((224,224)),
+    #transforms.ToTensor(),
+    #transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
     
-    testing_transform = transforms.Compose([
-    transforms.Resize((224,224)),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
+    #testing_transform = transforms.Compose([
+    #transforms.Resize((224,224)),
+    #transforms.ToTensor(),
+    #transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
     
     trainset = torchvision.datasets.ImageFolder(root=args.training_dir, transform=training_transform)
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size, shuffle=True)
     
-    validationset = torchvision.datasets.ImageFolder(root=args.validation_dir, transform=validation_transform)
-    validationloader = torch.utils.data.DataLoader(validationset, batch_size=args.batch_size, shuffle=True)
+    #validationset = torchvision.datasets.ImageFolder(root=args.validation_dir, transform=validation_transform)
+    #validationloader = torch.utils.data.DataLoader(validationset, batch_size=args.batch_size, shuffle=True)
 
     #testset = torchvision.datasets.ImageFolder(root=args.testing_dir, transform=testing_transform)
     #testloader = torch.utils.data.DataLoader(testset, batch_size=args.test_batch_size, shuffle=False)
     
-    return trainloader, validationloader #, testloader
+    return trainloader #, validationloader #, testloader
 
 
 
@@ -285,7 +286,7 @@ if __name__=='__main__':
     parser.add_argument("--current-host", type=str, default=os.environ["SM_CURRENT_HOST"])
     parser.add_argument("--model-dir", type=str, default=os.environ["SM_MODEL_DIR"])
     parser.add_argument("--training-dir", type=str, default=os.environ["SM_CHANNEL_TRAINING"])
-    parser.add_argument("--validation-dir", type=str, default=os.environ["SM_CHANNEL_VALIDATION"])
+    #parser.add_argument("--validation-dir", type=str, default=os.environ["SM_CHANNEL_VALIDATION"])
     #parser.add_argument("--testing-dir", type=str, default=os.environ["SM_CHANNEL_TESTING"])
     parser.add_argument("--num-gpus", type=int, default=os.environ["SM_NUM_GPUS"])
     args=parser.parse_args()
