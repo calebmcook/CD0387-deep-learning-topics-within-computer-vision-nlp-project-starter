@@ -19,7 +19,7 @@ logger.setLevel(logging.DEBUG)
 logger.addHandler(logging.StreamHandler(sys.stdout))
 
 
-def test(model, test_loader):
+def test(model, test_loader, criterion, device):
     '''
     TODO: Complete this function that can take a model and a 
           testing data loader and will get the test accuray/loss of the model
@@ -49,25 +49,19 @@ def test(model, test_loader):
 
 
 
-def train(model, train_loader, criterion, optimizer, device):
-    #train(model, train_loader, validation_loader, criterion, optimizer, device):
-    #train(model, trainloader, validationloader, loss_criterion, optimizer, device)
+def train(model, train_loader, validation_loader, criterion, optimizer, device):
     '''
     TODO: Complete this function that can take a model and
           data loaders for training and will get train the model
           Remember to include any debugging/profiling hooks that you might need
     '''
-    #debugger hook
-    #register hook to model -> Use in train_model.py for deploying best-hp model
-    #hook.set_mode(smd.modes.TRAIN)
-    
     epochs=2
     best_loss=1e6
-    image_dataset={'train':train_loader} #, 'valid':validation_loader}
+    image_dataset={'train': train_loader ,'valid':validation_loader}
     loss_counter=0
     
     for epoch in range(epochs):
-        for phase in ['train'] #['train', 'valid']:
+        for phase in ['train', 'valid']:
             print(f"Epoch {epoch}, Phase {phase}")
             if phase=='train':
                 model.train()
@@ -134,7 +128,8 @@ def net():
     for param in model.parameters():
         #requires_grad = False in order to allow fine-tuning
         param.requires_grad = False   
-
+    
+    #count of in-features in fully connected layer
     num_features=model.fc.in_features
     
     #sequential layer will have 133 outputs, the number of possible dog classifications
@@ -149,37 +144,32 @@ def create_data_loaders(args):
     This is an optional function that you may or may not need to implement
     depending on whether you need to use data loaders or not
     '''
-    #TRAIN_DATASET_PATH="s3://sagemaker-us-east-1-260552509205/data/train/"
-    #TEST_DATASET_PATH="s3://sagemaker-us-east-1-260552509205/data/test/"
-    #VALID_DATASET_PATH="s3://sagemaker-us-east-1-260552509205/data/valid/"
-    
     training_transform = transforms.Compose([
-    transforms.RandomHorizontalFlip(p=0.5),
-    transforms.Resize((224,224)),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
+        transforms.RandomHorizontalFlip(p=0.5),
+        transforms.Resize((224,224)),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
     
-    #validation_transform = transforms.Compose([
-    #transforms.RandomHorizontalFlip(p=0.5),
-    #transforms.Resize((224,224)),
-    #transforms.ToTensor(),
-    #transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
+    validation_transform = transforms.Compose([
+        transforms.Resize((224,224)),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
     
-    #testing_transform = transforms.Compose([
-    #transforms.Resize((224,224)),
-    #transforms.ToTensor(),
-    #transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
-    
+    testing_transform = transforms.Compose([
+        transforms.Resize((224,224)),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
+
     trainset = torchvision.datasets.ImageFolder(root=args.training_dir, transform=training_transform)
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size, shuffle=True)
-    
-    #validationset = torchvision.datasets.ImageFolder(root=args.validation_dir, transform=validation_transform)
-    #validationloader = torch.utils.data.DataLoader(validationset, batch_size=args.batch_size, shuffle=True)
 
-    #testset = torchvision.datasets.ImageFolder(root=args.testing_dir, transform=testing_transform)
-    #testloader = torch.utils.data.DataLoader(testset, batch_size=args.test_batch_size, shuffle=False)
+    validationset = torchvision.datasets.ImageFolder(root=args.validation_dir, transform=validation_transform)
+    validationloader = torch.utils.data.DataLoader(validationset, batch_size=args.batch_size, shuffle=True)
     
-    return trainloader #, validationloader #, testloader
+    testset = torchvision.datasets.ImageFolder(root=args.testing_dir, transform=testing_transform)
+    testloader = torch.utils.data.DataLoader(testset, batch_size=args.test_batch_size, shuffle=False)
+    
+    return trainloader, validationloader, testloader
 
 
 
@@ -208,39 +198,27 @@ def main(args):
     model=net()
     model.to(device)
     
-    #register hook to model -> Use in train_model.py for deploying best-hp model
-    ##hook = smd.Hook.create_from_json_file()
-    ##hook.register_hook(model)
-    
     '''
     TODO: Create your loss and optimizer
     '''
     loss_criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.fc.parameters(), lr=args.lr)
     
-    #register hook to model -> Use in train_model.py for deploying best-hp model
-    #hook = smd.Hook.create_from_json_file()
-    #hook.register_hook(model)
-    
     #create loaders
-    #trainloader, validationloader, testloader = create_data_loaders(args)
-    trainloader, validationloader = create_data_loaders(args)
+    trainloader, validationloader, testloader = create_data_loaders(args)
     
     '''
     TODO: Call the train function to start training your model
     Remember that you will need to set up a way to get training data from S3
     '''
     #Use in train_model.py for deploying best-hp model
-    #model=train(model, trainloader, validationloader, loss_criterion, optimizer, device, hook)
     model=train(model, trainloader, validationloader, loss_criterion, optimizer, device)
     '''
     TODO: Test the model to see its accuracy
     '''
-    
     #Use in train_model.py for deploying best-hp model
-    #test(model, testloader, loss_criterion, device, hook)
-    #test(model, testloader, loss_criterion, device)
-    
+    test(model, testloader, loss_criterion, device)
+
     '''
     TODO: Save the trained model
     '''
@@ -286,8 +264,8 @@ if __name__=='__main__':
     parser.add_argument("--current-host", type=str, default=os.environ["SM_CURRENT_HOST"])
     parser.add_argument("--model-dir", type=str, default=os.environ["SM_MODEL_DIR"])
     parser.add_argument("--training-dir", type=str, default=os.environ["SM_CHANNEL_TRAINING"])
-    #parser.add_argument("--validation-dir", type=str, default=os.environ["SM_CHANNEL_VALIDATION"])
-    #parser.add_argument("--testing-dir", type=str, default=os.environ["SM_CHANNEL_TESTING"])
+    parser.add_argument("--validation-dir", type=str, default=os.environ["SM_CHANNEL_VALIDATION"])
+    parser.add_argument("--testing-dir", type=str, default=os.environ["SM_CHANNEL_TESTING"])
     parser.add_argument("--num-gpus", type=int, default=os.environ["SM_NUM_GPUS"])
     args=parser.parse_args()
     
