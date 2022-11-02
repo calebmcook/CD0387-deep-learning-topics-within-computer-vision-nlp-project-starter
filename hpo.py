@@ -147,29 +147,41 @@ def create_data_loaders(args):
     training_transform = transforms.Compose([
         transforms.RandomHorizontalFlip(p=0.5),
         transforms.Resize((224,224)),
+        #transforms.Resize(224),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
     
     validation_transform = transforms.Compose([
         transforms.Resize((224,224)),
+        #transforms.Resize(224),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
     
     testing_transform = transforms.Compose([
         transforms.Resize((224,224)),
+        #transforms.Resize(224),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
 
     trainset = torchvision.datasets.ImageFolder(root=args.training_dir, transform=training_transform)
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size, shuffle=True)
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size, shuffle=True, collate_fn=collate_fn)
 
     validationset = torchvision.datasets.ImageFolder(root=args.validation_dir, transform=validation_transform)
-    validationloader = torch.utils.data.DataLoader(validationset, batch_size=args.batch_size, shuffle=True)
+    validationloader = torch.utils.data.DataLoader(validationset, batch_size=args.batch_size, shuffle=True, collate_fn=collate_fn)
     
     testset = torchvision.datasets.ImageFolder(root=args.testing_dir, transform=testing_transform)
-    testloader = torch.utils.data.DataLoader(testset, batch_size=args.test_batch_size, shuffle=False)
+    testloader = torch.utils.data.DataLoader(testset, batch_size=args.test_batch_size, shuffle=False, collate_fn=collate_fn)
     
     return trainloader, validationloader, testloader
+
+
+def collate_fn(batch):
+    #used because the images are not of the same size.
+    #See pytorch help thread here: 
+    #https://discuss.pytorch.org/t/runtimeerror-stack-expects-each-tensor-to-be-equal-size-but-got-3-224-224-at-entry-0-and-3-224-336-at-entry-3/87211/23
+    
+    batch = list(filter(lambda x: x is not None, batch))
+    return torch.utils.data.dataloader.default_collate(batch)  
 
 
 
