@@ -19,6 +19,13 @@ logger.setLevel(logging.DEBUG)
 logger.addHandler(logging.StreamHandler(sys.stdout))
 
 
+#To account for truncated or corrupt images
+#https://knowledge.udacity.com/questions/919040
+#https://stackoverflow.com/questions/12984426/pil-ioerror-image-file-truncated-with-big-images
+from PIL import ImageFile
+ImageFile.LOAD_TRUNCATED_IMAGES = True
+
+
 def test(model, test_loader, criterion, device):
     '''
     TODO: Complete this function that can take a model and a 
@@ -45,8 +52,7 @@ def test(model, test_loader, criterion, device):
 
     total_loss = running_loss / len(test_loader.dataset)
     total_acc = running_corrects/ len(test_loader.dataset)
-    print(f"Testing Accuracy: {100*total_acc}, Testing Loss: {total_loss}")
-
+    logger.info(f"Testing Accuracy: {100*total_acc}, Test set: Average loss: {total_loss}")
 
 
 def train(model, train_loader, validation_loader, criterion, optimizer, device):
@@ -88,7 +94,7 @@ def train(model, train_loader, validation_loader, criterion, optimizer, device):
                 running_samples+=len(inputs)
                 if running_samples % 2000  == 0:
                     accuracy = running_corrects/running_samples
-                    print("Images [{}/{} ({:.0f}%)] Loss: {:.2f} Accuracy: {}/{} ({:.2f}%)".format(
+                    logger.info("Images [{}/{} ({:.0f}%)] Loss: {:.2f} Accuracy: {}/{} ({:.2f}%)".format(
                             running_samples,
                             len(image_dataset[phase].dataset),
                             100.0 * (running_samples / len(image_dataset[phase].dataset)),
@@ -98,6 +104,7 @@ def train(model, train_loader, validation_loader, criterion, optimizer, device):
                             100.0*accuracy,
                         )
                     )
+                    
                 
                 #NOTE: Comment lines below to train and test on whole dataset
                 if running_samples>(0.2*len(image_dataset[phase].dataset)):
