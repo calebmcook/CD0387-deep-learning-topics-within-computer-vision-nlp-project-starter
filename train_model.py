@@ -52,7 +52,7 @@ def test(model, test_loader, criterion, device, hook):
     total_loss = running_loss / len(test_loader)
     total_acc = running_corrects.double() // len(test_loader)
     logger.info(f"Testing Accuracy: {total_acc}, Test set: Average loss: {total_loss}")
-    8
+    
 
 def train(model, train_loader, validation_loader, criterion, optimizer, device, hook):
     '''
