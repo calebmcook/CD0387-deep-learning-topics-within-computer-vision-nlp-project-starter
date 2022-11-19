@@ -26,7 +26,7 @@ ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 #TODO: Import dependencies for Debugging andd Profiling
 
-def test(model, test_loader, criterion, hook): #,device):
+def test(model, test_loader, criterion, hook, device):
     '''
     TODO: Complete this function that can take a model and a 
           testing data loader and will get the test accuray/loss of the model
@@ -41,8 +41,8 @@ def test(model, test_loader, criterion, hook): #,device):
     running_corrects=0
     
     for inputs, labels in test_loader:
-        #inputs=inputs.to(device)
-        #labels=labels.to(device)
+        inputs=inputs.to(device)
+        labels=labels.to(device)
         outputs=model(inputs)
         loss=criterion(outputs, labels)
         _, preds = torch.max(outputs, 1)
@@ -54,8 +54,8 @@ def test(model, test_loader, criterion, hook): #,device):
     logger.info(f"Testing Accuracy: {total_acc}, Test set: Average loss: {total_loss}")
     
 
-def train(model, train_loader, validation_loader, criterion, optimizer, hook): #,device):
-    '''
+def train(model, train_loader, validation_loader, criterion, optimizer, hook, device):
+    ''' 
     TODO: Complete this function that can take a model and
           data loaders for training and will get train the model
           Remember to include any debugging/profiling hooks that you might need
@@ -80,8 +80,8 @@ def train(model, train_loader, validation_loader, criterion, optimizer, hook): #
             running_corrects = 0
           
             for inputs, labels in image_dataset[phase]:
-                #inputs=inputs.to(device)
-                #labels=labels.to(device)
+                inputs=inputs.to(device)
+                labels=labels.to(device)
                 outputs = model(inputs)
                 loss = criterion(outputs, labels)
 
@@ -191,11 +191,11 @@ def main(args):
     logger.info(f'Hyperparameters. LR: {args.lr}, Batch Size: {args.batch_size}')
    
     
-    #device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    #print(f"Running on Device {device}")
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    logger.info(f"Running on Device {device}")
     
     model=net()
-    #model.to(device)
+    model.to(device)
     
     '''
     TODO: Create your loss and optimizer
@@ -216,12 +216,12 @@ def main(args):
     '''
     #Pass the SMDebug hook to the train and test functions
     logger.info("Starting Model Training")
-    model=train(model, trainloader, validationloader, loss_criterion, optimizer, hook) #,device)
+    model=train(model, trainloader, validationloader, loss_criterion, optimizer, hook, device)
     '''
     TODO: Test the model to see its accuracy
     '''
     logger.info("Testing Model")
-    test(model, testloader, loss_criterion, hook) #,device)
+    test(model, testloader, loss_criterion, hook, device)
 
     '''
     TODO: Save the trained model
