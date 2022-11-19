@@ -38,16 +38,29 @@ def test(model, test_loader, criterion, hook, device):
     print("Testing Model on Whole Testing Dataset")
     model.eval()
     running_loss=0
+    logger.info(f"running loss: {running_loss}")
     running_corrects=0
+    logger.info(f"running_corrects: {running_corrects}")
     
+    counter=0
     for inputs, labels in test_loader:
+        logger.info(f"counter: {counter}")
         inputs=inputs.to(device)
+        logger.info("finished putting inputs to device")
         labels=labels.to(device)
+        logger.info("finished putting labels to device")
         outputs=model(inputs)
+        logger.info("obtained outputs from running inputs into model")
         loss=criterion(outputs, labels)
+        logger.info(f"loss: {loss}"")
+                    
         _, preds = torch.max(outputs, 1)
+                    
         running_loss += loss.item() * inputs.size(0)
+        logger.info(f"running loss: {running_loss}")
         running_corrects += torch.sum(preds == labels.data)
+        logger.info(f"running_corrects: {running_corrects}")
+        counter+=1
 
     total_loss = running_loss / len(test_loader)
     total_acc = running_corrects.double() // len(test_loader)
@@ -60,9 +73,9 @@ def train(model, train_loader, validation_loader, criterion, optimizer, hook, de
           data loaders for training and will get train the model
           Remember to include any debugging/profiling hooks that you might need
     '''
-    epochs=10
+    epochs=2
     best_loss=1e6
-    image_dataset={'train': train_loader ,'valid':validation_loader}
+    image_dataset={'train': train_loader ,'valid': validation_loader}
     loss_counter=0
     
     #Set the SMDebug hook for the training phase
@@ -254,7 +267,7 @@ if __name__=='__main__':
     parser.add_argument(
         "--epochs",
         type=int,
-        default=1,
+        default=2,
         metavar="N",
         help="number of epochs to train (default: 1)",
     )
