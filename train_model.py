@@ -41,8 +41,8 @@ def test(model, test_loader, criterion, device, hook):
     running_corrects=0
     
     for inputs, labels in test_loader:
-        inputs=inputs.to(device)
-        labels=labels.to(device)
+        #inputs=inputs.to(device)
+        #labels=labels.to(device)
         outputs=model(inputs)
         loss=criterion(outputs, labels)
         _, preds = torch.max(outputs, 1)
