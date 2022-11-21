@@ -72,11 +72,13 @@ I imported the library smdebug, and added several lines of code to ensure the de
 ![Tensors.png](Tensors.png)
 
 ### Results
-**TODO**: What are the results/insights did you get by profiling/debugging your model?
-See the included profiler report .pdf (profiler-report.html)
-**TODO** Remember to provide the profiler html/pdf file in your submission.
+**TODO**: What are the results/insights did you get by profiling/debugging your model?  
+**TODO** Remember to provide the profiler html/pdf file in your submission.  
 
-The summary displayed here shows that there were 3 rules triggered, as well as the recommended remedies to be pursued.
+- Based on the above plot I do not see anomalous behavior as the cross entropy loss output tensor is steadily decreasing as the training steps increase. A possible error could be a non-decreasing graph of cross entropy loss as the training steps increased.  
+- See the included profiler report .pdf (profiler-report.html)
+- The summary displayed here shows that there were 3 rules triggered, as well as the recommended remedies to be pursued.  
+
 ![Profiler-Report-Flagged.png](Profiler-Report-Flagged.png)
 
 ## Model Deployment
