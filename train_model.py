@@ -1,3 +1,5 @@
+#file mostly copied from Udacity nanodegree, Operationalizing Machine Learning on SageMaker section, project, hpo.py.
+#excepted I added code for hook
 
 import numpy as np
 import torch
@@ -12,6 +14,9 @@ import argparse
 import os
 import logging
 import sys
+
+import smdebug.pytorch as smd
+
 from tqdm import tqdm
 from PIL import ImageFile
 ImageFile.LOAD_TRUNCATED_IMAGES = True
@@ -20,7 +25,15 @@ logger=logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 logger.addHandler(logging.StreamHandler(sys.stdout))
 
-def test(model, test_loader, criterion):
+def test(model, test_loader, criterion, hook):
+    '''
+    TODO: Complete this function that can take a model and a 
+          testing data loader and will get the test accuray/loss of the model
+          Remember to include any debugging/profiling hooks that you might need
+    '''
+    #Set the SMDebug hook for the validation phase
+    hook.set_mode(smd.modes.EVAL)
+    
     model.eval()
     running_loss=0
     running_corrects=0
@@ -38,11 +51,19 @@ def test(model, test_loader, criterion):
     logger.info(f"Testing Loss: {total_loss}")
     logger.info(f"Testing Accuracy: {total_acc}")
 
-def train(model, train_loader, validation_loader, criterion, optimizer):
-    epochs=50
+def train(model, train_loader, validation_loader, criterion, optimizer, hook):
+    ''' 
+    TODO: Complete this function that can take a model and
+          data loaders for training and will get train the model
+          Remember to include any debugging/profiling hooks that you might need
+    '''
+    epochs=5
     best_loss=1e6
     image_dataset={'train':train_loader, 'valid':validation_loader}
     loss_counter=0
+    
+    #Set the SMDebug hook for the training phase
+    hook.set_mode(smd.modes.TRAIN)
     
     for epoch in range(epochs):
         logger.info(f"Epoch: {epoch}")
@@ -136,11 +157,15 @@ def main(args):
     criterion = nn.CrossEntropyLoss(ignore_index=133)
     optimizer = optim.Adam(model.fc.parameters(), lr=args.learning_rate)
     
+    #Register the SMDebug hook to save output tensors.
+    hook = smd.Hook.create_from_json_file()
+    hook.register_hook(model)
+    
     logger.info("Starting Model Training")
-    model=train(model, train_loader, validation_loader, criterion, optimizer)
+    model=train(model, train_loader, validation_loader, criterion, optimizer, hook)
     
     logger.info("Testing Model")
-    test(model, test_loader, criterion)
+    test(model, test_loader, criterion, hook)
     
     logger.info("Saving Model")
     torch.save(model.cpu().state_dict(), os.path.join(args.model_dir, "model.pth"))
