@@ -54,12 +54,30 @@ Remember that your README should:
 
 ## Debugging and Profiling
 **TODO**: Give an overview of how you performed model debugging and profiling in Sagemaker
+I imported the library smdebug, and added several lines of code to ensure the debugger and profiler were set up properly.
+- In `train_and_deploy.ipynb`, I added the following:  
+
+        #imports for debugger and profiler
+        import smdebug.pytorch as smd
+        from sagemaker.debugger import (
+          Rule,
+           DebuggerHookConfig,
+           rule_configs,
+           ProfilerRule,
+           ProfilerConfig,
+           FrameworkProfile
+            )
+            
+#### Plot of tensors
+![Tensors.png](Tensors.png)
 
 ### Results
 **TODO**: What are the results/insights did you get by profiling/debugging your model?
-
+See the included profiler report .pdf (profiler-report.html)
 **TODO** Remember to provide the profiler html/pdf file in your submission.
 
+The summary displayed here shows that there were 3 rules triggered, as well as the recommended remedies to be pursued.
+![Profiler-Report-Flagged.png](Profiler-Report-Flagged.png)
 
 ## Model Deployment
 **TODO**: Give an overview of the deployed model and instructions on how to query the endpoint with a sample input.
