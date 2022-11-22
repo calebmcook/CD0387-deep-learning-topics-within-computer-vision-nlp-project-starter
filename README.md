@@ -17,7 +17,7 @@ Upload the data to an S3 bucket through the AWS Gateway so that SageMaker has ac
 
 ## Hyperparameter Tuning
 What kind of model did you choose for this experiment and why? Give an overview of the types of parameters and their ranges used for the hyperparameter search
--For simplicity I chose to use resnet18.
+-For simplicity I chose to use resnet18 for hpo and resnet50 for deployment.
 -I used learning rate and batch size as two hyperparameters.
 
     hyperparameter_ranges = {
