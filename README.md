@@ -53,20 +53,14 @@ Remember that your README should:
          'sagemaker_submit_directory': '"s3://sagemaker-us-east-1-260552509205/pytorch-training-2022-11-03-21-09-16-647/source/sourcedir.tar.gz"'}
 
 ## Debugging and Profiling
-**TODO**: Give an overview of how you performed model debugging and profiling in Sagemaker
-I imported the library smdebug, and added several lines of code to ensure the debugger and profiler were set up properly.
-- In `train_and_deploy.ipynb`, I added the following:  
+**TODO**: Give an overview of how you performed model debugging and profiling in Sagemaker  
 
-        #imports for debugger and profiler
-        import smdebug.pytorch as smd
-        from sagemaker.debugger import (
-          Rule,
-           DebuggerHookConfig,
-           rule_configs,
-           ProfilerRule,
-           ProfilerConfig,
-           FrameworkProfile
-            )
+I imported the library smdebug, and added several lines of code to ensure the debugger and profiler were set up properly. This included:
+- importing various libraries associate with debugger and profiler
+- registering the model to hook
+- setting the mode of the hook to train or eval as appropriate.
+
+For full code, see train_and_deploy.ipynb, section 'Model Profiling and Debugging', as well as train_model.py
             
 #### Plot of tensors
 ![Tensors.png](Tensors.png)
@@ -83,8 +77,12 @@ I imported the library smdebug, and added several lines of code to ensure the de
 
 ## Model Deployment
 **TODO**: Give an overview of the deployed model and instructions on how to query the endpoint with a sample input.
+See train_and_deploy.ipynb, section titled 'Model Deploying'.
 
 **TODO** Remember to provide a screenshot of the deployed active endpoint in Sagemaker.
+Deployed Endpoint
+![deployed-endpoint.png](deployed-endpoint.png)
 
 ## Standout Suggestions
 **TODO (Optional):** This is where you can provide information about any standout suggestions that you have attempted.
+Due to time contraints I did not pursue this section.
